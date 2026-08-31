@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 커서 만들기 - 윈도우 설정 & 핫스팟 실습 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .cursor-card:hover {
+            transform: translateY(-4px);
+            transition: all 0.25s ease;
+        }
+        /* 픽셀 격자 배경 */
+        .pixel-grid {
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);
+            background-color: #f8fafc;
+            cursor: none; /* 격자판 내부에서는 기본 커서를 숨김 */
+        }
+        /* 핫스팟 빨간 펄스 마커 */
+        .hotspot-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 50;
+            box-shadow: 0 0 0 2px white, 0 0 10px rgba(239, 68, 68, 0.9);
+            animation: pulse-hotspot 1.5s infinite;
+        }
+        @keyframes pulse-hotspot {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.35); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        #custom-cursor-follower {
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+            display: none;
+        }
+        /* 이미지 내 좌표 레이어 가이드 */
+        .map-overlay {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 leading-relaxed">
+
+    <header class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white py-12 px-6 text-center shadow-md relative overflow-hidden">
+        <div class="max-w-4xl mx-auto space-y-4 relative z-10">
+            <span class="inline-block bg-white/20 backdrop-blur-md text-indigo-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Windows Custom Cursor Guide</span>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">🖱️ 진짜 내 컴퓨터 커서 만들기</h1>
+            <p class="text-base md:text-lg opacity-90 max-w-2xl mx-auto font-normal">
+                윈도우(Windows)의 심심한 기본 화살표를 <br class="hidden sm:inline"> 
+                세상에 하나뿐인 나만의 예쁜 캐릭터나 아이콘으로 바꿔보아요!
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-16">
+
+        <!-- STEP 01: 컴퓨터 커서 기초 -->
+        <section id="step-1" class="space-y-6">
+            <div class="text-center max-w-2xl mx-auto">
+                <div class="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1 rounded-lg mb-2">
+                    <span>STEP 01</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">1. 컴퓨터는 왜 여러 모양의 커서를 쓸까요?</h2>
+                <p class="mt-2 text-slate-600 text-sm md:text-base">마우스 커서는 단순한 화살표가 아니에요. 현재 내가 어떤 행동을 할 수 있는지 알려주는 컴퓨터의 '대화 수단'이랍니다!</p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="cursor-card p-6 bg-white border border-slate-200/80 rounded-2xl text-center shadow-sm hover:shadow-md" style="cursor: default;">
+                    <span class="text-4xl block mb-2">🏹</span>
+                    <span class="font-bold text-slate-800 text-sm block">기본 선택 (default)</span>
+                    <p class="text-xs text-slate-400 mt-1">평소 가장 많이 쓰는 화살표</p>
+                </div>
+                <div class="cursor-card p-6 bg-white border border-slate-200/80 rounded-2xl text-center shadow-sm hover:shadow-md" style="cursor: text;">
+                    <span class="text-4xl block mb-2">📋</span>
+                    <span class="font-bold text-slate-800 text-sm block">텍스트 선택 (text)</span>
+                    <p class="text-xs text-slate-400 mt-1">글자를 드래그하거나 쓸 때</p>
+                </div>
+                <div class="cursor-card p-6 bg-white border border-slate-200/80 rounded-2xl text-center shadow-sm hover:shadow-md" style="cursor: move;">
+                    <span class="text-4xl block mb-2">🔃</span>
+                    <span class="font-bold text-slate-800 text-sm block">이동 (move)</span>
+                    <p class="text-xs text-slate-400 mt-1">창이나 객체를 끌어서 옮길 때</p>
+                </div>
+                <div class="cursor-card p-6 bg-white border border-slate-200/80 rounded-2xl text-center shadow-sm hover:shadow-md" style="cursor: help;">
+                    <span class="text-4xl block mb-2">❓</span>
+                    <span class="font-bold text-slate-800 text-sm block">도움말 (help)</span>
+                    <p class="text-xs text-slate-400 mt-1">물음표 설명이 필요할 때</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 02: 이미지 만들기 -->
+        <section id="step-2" class="bg-white rounded-3xl p-8 md:p-10 shadow-sm border border-slate-200/70 space-y-6">
+            <div class="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1 rounded-lg">
+                <span>STEP 02</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">2. 나만의 커서 이미지 만들기</h2>
+            <p class="text-slate-600 text-sm md:text-base">
+                마우스 커서로 쓸 그림이나 캐릭터 이미지를 준비해 볼까요?
+            </p>
+
+            <div class="flex flex-col gap-4 pt-2">
+                <!-- 1. 이미지 다운로드하기 -->
+                <div class="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">1</div>
+                    <div class="space-y-1.5 flex-1">
+                        <h3 class="font-bold text-slate-800 text-base">커서로 만들고 싶은 이미지 다운로드하기</h3>
+                        <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+                            나만의 커서로 만들고 싶은 이미지를 구글에 검색합니다. 원하는 이미지를 클릭 후 마우스 오른쪽 버튼을 클릭하고 <b>'이미지를 다른 이름으로 저장'</b>을 클릭하여 저장합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2. AI로 투명 PNG 준비하기 -->
+                <div class="flex items-start gap-4 p-5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                    <div class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">2</div>
+                    <div class="space-y-3 flex-1">
+                        <h3 class="font-bold text-indigo-950 text-base flex items-center gap-1.5">
+                            <span>🤖 생성형 AI로 커서용 이미지 준비하기</span>
+                        </h3>
+                        <p class="text-xs md:text-sm text-indigo-900/90 leading-relaxed">
+                            제미나이(또는 다른 생성형 AI)에 다운로드받은 이미지를 첨부한 뒤, 아래와 같은 내용으로 프롬프트를 작성하여 이미지를 생성해 보세요.
+                        </p>
+                        
+                        <!-- 프롬프트 명령어 가이드 박스 -->
+                        <div class="bg-white p-4 rounded-xl border border-indigo-200/80 text-xs text-slate-700 shadow-2xs">
+                            <p class="font-bold text-indigo-700 text-xs mb-3">💬 AI 프롬프트 작성 팁:</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                                <!-- 좌측: 프롬프트 및 가이드 텍스트 -->
+                                <div class="space-y-2">
+                                    <p class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 text-slate-800 font-mono text-xs font-semibold">
+                                        "이 이미지를 마우스 커서용으로 다시 만들어줘."
+                                    </p>
+                                    <ul class="list-disc list-inside space-y-1 text-xs text-slate-600 pl-1 leading-normal">
+                                        <li>1) <b>1:1 비율</b>로 정사각형</li>
+                                        <li>2) <b>클릭 지점을 구체적으로 설정</b> ex. 왼쪽 귀가 좌측 상단을 향하게(클릭 지점)</li>
+                                        <li>3) <b>32X32 픽셀</b>에서도 잘 보이게 단순화</li>
+                                        <li>4) 두꺼운 외곽선 추가</li>
+                                        <li>5) 배경은 단색 또는 단순하게</li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- 우측: 1:1 비율 예시 이미지 박스 -->
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-full max-w-[170px] aspect-square rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center p-2 shadow-inner group">
+                                        <img src="./images/잔망루피.png" alt="잔망루피 이미지 예시" class="w-full h-full object-contain rounded-lg transition-transform group-hover:scale-105" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-center p-2 text-slate-400 text-[11px]\'>🖼️<br>./images/잔망루피.png<br>(이미지 경로)</div>';">
+                                    </div>
+                                    <span class="text-[11px] text-slate-400 mt-1.5 font-medium">예시: 1:1 정사각형 이미지</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 03: .cur 파일로 변환하기 -->
+        <section id="step-3" class="bg-white rounded-3xl p-8 md:p-10 shadow-sm border border-slate-200/70 space-y-6">
+            <div class="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1 rounded-lg">
+                <span>STEP 03</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">3. 나만의 커서 이미지를 .cur 파일로 변환하기</h2>
+            <p class="text-slate-600 text-sm md:text-base">
+                윈도우 마우스 커서로 쓰려면 일반 PNG 그림을 윈도우 전용 커서 확장자인 <b>.cur</b> 형식으로 바꿔주어야 합니다.
+            </p>
+
+            <div class="p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <h3 class="font-bold text-slate-800 text-base">온라인 커서 변환기 활용</h3>
+                        <p class="text-xs md:text-sm text-slate-600">준비한 PNG 이미지를 .cur 커서 파일로 즉시 무료 변환할 수 있습니다.</p>
+                    </div>
+                    <a href="https://convertio.co/kr/cur-converter/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow whitespace-nowrap">
+                        <span>🌐 cur 커서 변환기 사이트 바로가기</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 04: 핫스팟 탐색하기 -->
+        <section id="step-4" class="space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <div class="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1 rounded-lg mb-2">
+                    <span>STEP 04</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">4. 핫스팟(클릭 지점) 탐색하기</h2>
+                <p class="mt-2 text-slate-600 text-sm md:text-base">준비한 이미지를 올려보세요! 어디를 눌러야 진짜 클릭이 일어나는지 직접 체험해 볼 수 있어요.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8">
+                <!-- 좌측 7칸: 이미지 업로드 & 핫스팟 지정 -->
+                <div class="lg:col-span-7 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200/80 space-y-6 flex flex-col justify-between">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- 이미지 등록 영역 -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">1단계: 이미지 파일 올리기</label>
+                            <input type="file" id="cursor-upload" accept="image/*" class="hidden">
+                            <label for="cursor-upload" class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/30 rounded-2xl cursor-pointer transition-all overflow-hidden relative group">
+                                <div id="upload-placeholder" class="text-center p-4">
+                                    <span class="text-3xl mb-2 block group-hover:scale-110 transition-transform">🖼️</span>
+                                    <span class="text-xs text-slate-500 font-semibold block">클릭하여 이미지 선택</span>
+                                    <span class="text-[11px] text-slate-400 block mt-1">(PNG, JPG 파일 가능)</span>
+                                </div>
+                                <div id="map-container" class="hidden w-full h-full relative flex items-center justify-center bg-slate-100/80 overflow-hidden cursor-crosshair">
+                                    <div class="map-overlay absolute inset-0 pointer-events-none opacity-40"></div>
+                                    <img id="upload-preview" class="max-w-[128px] max-h-[128px] object-contain opacity-60 select-none pointer-events-none">
+                                    <!-- 지정된 핫스팟 지점 핀 -->
+                                    <div id="map-hotspot" class="hotspot-dot"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- 핫스팟 클릭 안내 -->
+                        <div class="flex flex-col justify-center space-y-3">
+                            <label class="block text-sm font-bold text-slate-700">2단계: 핫스팟(클릭 지점) 파악하기</label>
+                            <div class="p-4 bg-indigo-50/80 border border-indigo-100 rounded-2xl space-y-2">
+                                <p class="text-xs text-indigo-900 leading-relaxed font-medium">
+                                    왼쪽 이미지 위에서 <b>진짜 클릭 신호가 들어갈 위치</b>(예: 캐릭터의 코, 화살표의 뾰족한 끝 등)를 마우스로 직접 콕 눌러보세요!
+                                </p>
+                                <div class="text-xs text-slate-600 font-semibold flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-indigo-100 shadow-2xs">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                                    <span>지정된 좌표: <b id="coords-display" class="text-indigo-600">X: 0, Y: 0</b></span>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">
+                                빨간 점이 찍힌 자리가 마우스로 클릭할 때 실제로 명령이 들어가는 단 1픽셀 지점입니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <p class="text-xs text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200/60 flex items-center gap-2">
+                            <span>💡</span>
+                            <span>오른쪽 격자판에 마우스를 대면 설정한 핫스팟이 적용된 커서가 나타나요!</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 우측 5칸: 격자판 실습 & 전문가 팁 카드 -->
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    <!-- 인터랙티브 격자판 영역 -->
+                    <div class="relative overflow-hidden bg-slate-200 rounded-3xl border-4 border-slate-300 pixel-grid h-[260px] flex items-center justify-center shadow-inner" id="grid-container">
+                        <!-- 움직이는 커서 팔로워 -->
+                        <div id="custom-cursor-follower" class="absolute pointer-events-none z-40 hidden">
+                            <div class="relative">
+                                <img id="follower-img" src="" alt="" class="max-w-[128px] max-h-[128px] object-contain">
+                                <!-- 커서 내부 핫스팟 표시 -->
+                                <div id="follower-hotspot" class="absolute w-3.5 h-3.5 bg-red-600 rounded-full border-2 border-white shadow-[0_0_8px_rgba(239,68,68,0.9)] -translate-x-1/2 -translate-y-1/2"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 실제 마우스 조준 지점 가이드 -->
+                        <div id="hotspot-guide" class="hotspot-dot hidden">
+                            <span class="absolute whitespace-nowrap bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-md left-4 top-1/2 -translate-y-1/2 font-bold pointer-events-none">클릭 지점!</span>
+                        </div>
+                        
+                        <div id="grid-instructions" class="text-slate-400 font-bold pointer-events-none text-center px-4 text-xs md:text-sm">
+                            이미지를 올린 후 <br>이 위로 마우스를 올려보세요!
+                        </div>
+                    </div>
+
+                    <!-- 전문가의 팁 카드 -->
+                    <div class="bg-slate-900 rounded-2xl p-5 text-white flex flex-col justify-center shadow-md border border-slate-800 space-y-2">
+                        <h3 class="text-sm font-bold text-indigo-300 flex items-center gap-2">
+                            <span>💡 전문가의 팁: 핫스팟(Hotspot)이란?</span>
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            이미지 파일은 크기가 커도, 실제로 컴퓨터가 "클릭했다"고 판단하는 영역은 단 <b>1픽셀</b>이에요! <br>
+                            이 지점을 <b>핫스팟</b>이라고 하며, 위치 설정을 잘못하면 조준이 안 맞아 불편한 마우스가 된답니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 05: 파일 이동 및 윈도우 설정 -->
+        <section id="step-5" class="bg-gradient-to-br from-indigo-50 via-slate-50 to-purple-50 border border-indigo-100/80 rounded-3xl p-8 md:p-10 shadow-sm space-y-8">
+            <div class="space-y-4">
+                <div class="inline-flex items-center gap-2 text-indigo-700 font-bold text-sm bg-white px-3 py-1 rounded-lg border border-indigo-100">
+                    <span>STEP 05</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-950">5. 다운로드 한 커서 파일을 전용 폴더로 이동하기 & 적용하기</h2>
+                
+                <!-- 중요 팁 안내 박스 -->
+                <div class="bg-white p-6 rounded-2xl border border-indigo-200/80 shadow-sm leading-relaxed text-slate-700 text-sm md:text-base space-y-2">
+                    <p class="font-semibold text-indigo-900 flex items-center gap-2 text-base md:text-lg">
+                        <span>📌 [가장 중요한 핵심 팁!]</span>
+                    </p>
+                    <p class="leading-relaxed">
+                        다운로드한 커서 파일(.cur)은 반드시 <b class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">C:\Windows\Cursors</b> 폴더로 이동해서 넣고 사용하는 걸 권장합니다.
+                    </p>
+                    <p class="text-xs md:text-sm text-slate-500">
+                        바탕화면이나 다운로드 폴더에 그대로 둔 채 설정하면, 나중에 폴더를 정리하거나 실수로 파일이 삭제되었을 때 컴퓨터 재부팅 후 커서가 윈도우 기본 화살표로 되돌아가버리기 때문이에요!
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- A. 파일 이동 방법 -->
+                <div class="bg-white p-6 rounded-2xl border border-indigo-100/70 space-y-3 shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">A</span>
+                        <h3 class="font-bold text-slate-800 text-base">안전하게 파일 옮기기</h3>
+                    </div>
+                    <ol class="text-xs md:text-sm text-slate-600 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
+                        <li>다운로드한 <b>.cur</b> 커서 파일을 복사(Ctrl+C)합니다.</li>
+                        <li><b>[내 PC] → [로컬 디스크 (C:)] → [Windows] → [Cursors]</b> 폴더로 이동합니다.</li>
+                        <li>폴더 안에 복사한 커서 파일을 붙여넣기(Ctrl+V)합니다. (관리자 권한 메시지가 나오면 '계속' 클릭)</li>
+                    </ol>
+                </div>
+
+                <!-- B. 윈도우 포인터 설정 -->
+                <div class="bg-white p-6 rounded-2xl border border-indigo-100/70 space-y-3 shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">B</span>
+                        <h3 class="font-bold text-slate-800 text-base">윈도우 포인터 설정에서 적용하기</h3>
+                    </div>
+                    <ol class="text-xs md:text-sm text-slate-600 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
+                        <li>윈도우 시작 메뉴에서 <b>[설정] → [장치] → [마우스]</b>로 이동합니다.</li>
+                        <li>우측 상단의 <b>[추가 마우스 옵션]</b>을 눌러 마우스 속성 창을 엽니다.</li>
+                        <li><b>[포인터]</b> 탭 ➔ 목록의 <b>'일반 선택'</b>을 더블클릭 ➔ 아까 옮겨둔 `C:\Windows\Cursors` 안의 `.cur` 파일 선택 ➔ <b>[적용] 및 [확인]</b> 클릭!</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-10 text-xs text-slate-400 border-t border-slate-200 bg-white">
+        <p>© 나만의 윈도우 커서 만들기 가이드 | 의리T의 코딩 교실</p>
+    </footer>
+
+    <script>
+        const uploadInput = document.getElementById('cursor-upload');
+        const uploadPreview = document.getElementById('upload-preview');
+        const mapContainer = document.getElementById('map-container');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const mapHotspot = document.getElementById('map-hotspot');
+        
+        const follower = document.getElementById('custom-cursor-follower');
+        const followerImg = document.getElementById('follower-img');
+        const followerHotspot = document.getElementById('follower-hotspot');
+        const gridContainer = document.getElementById('grid-container');
+        const gridInstructions = document.getElementById('grid-instructions');
+        const hotspotGuide = document.getElementById('hotspot-guide');
+        const coordsDisplay = document.getElementById('coords-display');
+
+        let cursorUrl = "";
+        let hX = 0;
+        let hY = 0;
+
+        // 이미지 파일 업로드 처리
+        uploadInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    cursorUrl = event.target.result;
+                    uploadPreview.src = cursorUrl;
+                    mapContainer.classList.remove('hidden');
+                    uploadPlaceholder.classList.add('hidden');
+                    
+                    followerImg.src = cursorUrl;
+                    gridInstructions.classList.add('opacity-0');
+                    
+                    // 좌표 초기화
+                    hX = 0;
+                    hY = 0;
+                    coordsDisplay.innerText = `X: ${hX}, Y: ${hY}`;
+                    
+                    setTimeout(updateMapHotspot, 50);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // 이미지 직접 클릭하여 핫스팟 지정
+        mapContainer.onclick = (e) => {
+            if (!cursorUrl) return;
+
+            const imgRect = uploadPreview.getBoundingClientRect();
+
+            let x = Math.round(e.clientX - imgRect.left);
+            let y = Math.round(e.clientY - imgRect.top);
+
+            x = Math.max(0, Math.min(Math.round(imgRect.width), x));
+            y = Math.max(0, Math.min(Math.round(imgRect.height), y));
+
+            hX = x;
+            hY = y;
+
+            coordsDisplay.innerText = `X: ${hX}, Y: ${hY}`;
+            updateMapHotspot();
+        };
+
+        // 이미지 상의 핫스팟 위치 업데이트
+        function updateMapHotspot() {
+            if (!cursorUrl) return;
+            
+            const imgRect = uploadPreview.getBoundingClientRect();
+            const containerRect = mapContainer.getBoundingClientRect();
+
+            const offsetX = imgRect.left - containerRect.left;
+            const offsetY = imgRect.top - containerRect.top;
+
+            mapHotspot.style.left = `${offsetX + hX}px`;
+            mapHotspot.style.top = `${offsetY + hY}px`;
+        }
+
+        // 격자판 위 마우스 움직임 동기화
+        gridContainer.onmousemove = (e) => {
+            if (!cursorUrl) return;
+
+            const rect = gridContainer.getBoundingClientRect();
+            const x = Math.round(e.clientX - rect.left);
+            const y = Math.round(e.clientY - rect.top);
+
+            follower.style.display = 'block';
+
+            follower.style.left = `${x - hX}px`;
+            follower.style.top = `${y - hY}px`;
+
+            hotspotGuide.style.left = `${x}px`;
+            hotspotGuide.style.top = `${y}px`;
+
+            followerHotspot.style.left = `${hX}px`;
+            followerHotspot.style.top = `${hY}px`;
+        };
+
+        gridContainer.onmouseleave = () => {
+            follower.style.display = 'none';
+            hotspotGuide.classList.add('hidden');
+            if(!cursorUrl) gridInstructions.classList.remove('opacity-0');
+        };
+
+        gridContainer.onmouseenter = () => {
+            if(cursorUrl) {
+                follower.style.display = 'block';
+                hotspotGuide.classList.remove('hidden');
+            }
+        };
+
+        window.onresize = updateMapHotspot;
+    </script>
+</body>
+</html>
